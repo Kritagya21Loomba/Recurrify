@@ -101,11 +101,15 @@ async def solve_recurrence(request: SolveRequest):
         if solver is None:
             continue
         result = solver.solve(info)
-        if result.applicable and result.closed_form_sympy is not None:
-            try:
-                result.verification = verifier.verify(info, result.closed_form_sympy)
-            except Exception:
-                pass
+        cf = result.closed_form_sympy
+        if result.applicable and cf is not None:
+            # Guard: skip verification for nan/zoo/infinite closed forms
+            from sympy import zoo, oo, nan as sp_nan
+            if cf not in (zoo, oo, -oo, sp_nan) and not (hasattr(cf, 'is_finite') and cf.is_finite is False):
+                try:
+                    result.verification = verifier.verify(info, cf)
+                except Exception:
+                    pass
         solutions.append(_solution_to_model(result))
 
     return SolveResponse(

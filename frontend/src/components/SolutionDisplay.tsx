@@ -21,13 +21,20 @@ export function SolutionDisplay({ result }: SolutionDisplayProps) {
 
   return (
     <div className="solution-display">
+      <div className="section-label">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+        Analysis
+      </div>
+
       <div className="classification-box">
-        <h3>Classification</h3>
-        <p>{result.classification.reasoning}</p>
-        <p>
-          <strong>Type:</strong>{" "}
-          {result.classification.recurrence_type.replace("_", " ")}
-        </p>
+        <div className="classification-header">
+          <span className="classification-tag">
+            {result.classification.recurrence_type.replace(/_/g, " ")}
+          </span>
+        </div>
+        <p className="classification-reasoning">{result.classification.reasoning}</p>
       </div>
 
       {applicableSolutions.length > 0 ? (
@@ -40,12 +47,19 @@ export function SolutionDisplay({ result }: SolutionDisplayProps) {
 
           {currentSolution && (
             <div className="method-solution">
-              <h3>{currentSolution.method}</h3>
+              <div className="method-title">
+                <h3>{currentSolution.method}</h3>
+              </div>
               <StepList steps={currentSolution.steps} />
 
               {currentSolution.closed_form && (
                 <div className="closed-form-box">
-                  <h4>Result</h4>
+                  <div className="closed-form-label">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M2 8h12M8 2l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Closed Form
+                  </div>
                   <MathBlock latex={currentSolution.closed_form} />
                 </div>
               )}
@@ -60,14 +74,20 @@ export function SolutionDisplay({ result }: SolutionDisplayProps) {
         </>
       ) : (
         <div className="no-solution">
-          <p>No applicable solution methods found for this recurrence.</p>
-          {result.solutions
-            .filter((s) => !s.applicable)
-            .map((s, i) => (
-              <p key={i}>
-                {s.method}: {s.inapplicable_reason}
-              </p>
-            ))}
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M10 6v5M10 13v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <div>
+            <p>No applicable solution methods found for this recurrence.</p>
+            {result.solutions
+              .filter((s) => !s.applicable)
+              .map((s, i) => (
+                <p key={i} className="inapplicable-reason">
+                  <strong>{s.method}:</strong> {s.inapplicable_reason}
+                </p>
+              ))}
+          </div>
         </div>
       )}
     </div>

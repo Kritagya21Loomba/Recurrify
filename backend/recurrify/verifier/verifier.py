@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import signal
+import threading
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
+
 from sympy import (
     Function,
     Integer,
@@ -10,7 +14,17 @@ from sympy import (
 )
 
 from recurrify.models.ast_nodes import RecurrenceInfo
-from recurrify.solvers.base import VerificationResult
+from recurrify.solvers.base import VerificationResult, to_sympy_number
+
+
+def _run_with_timeout(fn, timeout_sec=5):
+    """Run fn() with a timeout. Returns fn() result or raises TimeoutError."""
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(fn)
+        try:
+            return future.result(timeout=timeout_sec)
+        except FuturesTimeout:
+            raise TimeoutError("computation timed out")
 
 
 class Verifier:
@@ -32,22 +46,33 @@ class Verifier:
         n = Symbol(info.var)
 
         try:
-            # Build LHS: closed_form evaluated at n
             lhs = closed_form
 
-            # Build RHS from the recurrence
             if info.num_subproblems is not None and info.division_factor is not None:
                 a = info.num_subproblems
                 b = info.division_factor
                 f = info.driving_function if info.driving_function else Integer(0)
 
-                rhs = a * closed_form.subs(n, n / Integer(b)) + f
-                diff = simplify(lhs - rhs)
+                rhs = a * closed_form.subs(n, n / to_sympy_number(b)) + f
+
+                # Use timeout for simplify — it can hang on complex expressions
+                try:
+                    diff = _run_with_timeout(lambda: simplify(lhs - rhs), timeout_sec=3)
+                    rhs_simple = _run_with_timeout(lambda: simplify(rhs), timeout_sec=3)
+                except TimeoutError:
+                    diff_str = latex(lhs - rhs)
+                    return (
+                        f"Substituting T(n) = {latex(closed_form)} into the recurrence:\\n"
+                        f"LHS = {latex(lhs)}\\n"
+                        f"RHS = {a} \\cdot T(n/{b}) + {latex(f)}\\n"
+                        f"LHS - RHS = {diff_str}\\n"
+                        f"(symbolic simplification timed out — check numerically)"
+                    )
 
                 return (
                     f"Substituting T(n) = {latex(closed_form)} into the recurrence:\\n"
                     f"LHS = {latex(lhs)}\\n"
-                    f"RHS = {a} \\cdot T(n/{b}) + {latex(f)} = {latex(simplify(rhs))}\\n"
+                    f"RHS = {a} \\cdot T(n/{b}) + {latex(f)} = {latex(rhs_simple)}\\n"
                     f"LHS - RHS = {latex(diff)}"
                 )
             elif info.coefficients:
@@ -58,12 +83,22 @@ class Verifier:
                 if info.nonhomogeneous_part:
                     rhs_parts.append(info.nonhomogeneous_part)
                 rhs = sum(rhs_parts)
-                diff = simplify(lhs - rhs)
+
+                try:
+                    diff = _run_with_timeout(lambda: simplify(lhs - rhs), timeout_sec=3)
+                    rhs_simple = _run_with_timeout(lambda: simplify(rhs), timeout_sec=3)
+                except TimeoutError:
+                    return (
+                        f"Substituting T(n) = {latex(closed_form)} into the recurrence:\\n"
+                        f"LHS = {latex(lhs)}\\n"
+                        f"RHS = {latex(rhs)}\\n"
+                        f"(symbolic simplification timed out — check numerically)"
+                    )
 
                 return (
                     f"Substituting T(n) = {latex(closed_form)} into the recurrence:\\n"
                     f"LHS = {latex(lhs)}\\n"
-                    f"RHS = {latex(simplify(rhs))}\\n"
+                    f"RHS = {latex(rhs_simple)}\\n"
                     f"LHS - RHS = {latex(diff)}"
                 )
         except Exception as e:
@@ -115,7 +150,9 @@ class Verifier:
             val = 1
             while val <= max_n:
                 test_values.append(val)
-                val = int(val * b)
+                val = int(val * b) if val * b == int(val * b) else int(val * b) + 1
+                if val == test_values[-1]:
+                    break  # Avoid infinite loop for b close to 1
             if not test_values or test_values[0] != 1:
                 test_values.insert(0, 1)
 

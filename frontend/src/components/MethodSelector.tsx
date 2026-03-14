@@ -7,15 +7,18 @@ interface MethodSelectorProps {
 export function MethodSelector({ methods, selected, onSelect }: MethodSelectorProps) {
   return (
     <div className="method-selector">
-      {methods.map((method) => (
-        <button
-          key={method}
-          className={`method-tab ${selected === method ? "active" : ""}`}
-          onClick={() => onSelect(method)}
-        >
-          {method}
-        </button>
-      ))}
+      <span className="method-selector-label">Solution Method</span>
+      <div className="method-tabs">
+        {methods.map((method) => (
+          <button
+            key={method}
+            className={`method-tab ${selected === method ? "active" : ""}`}
+            onClick={() => onSelect(method)}
+          >
+            {method}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

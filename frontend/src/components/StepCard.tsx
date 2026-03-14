@@ -9,38 +9,41 @@ interface StepCardProps {
 export function StepCard({ step, index }: StepCardProps) {
   return (
     <div className="step-card">
-      <div className="step-header">
-        <span className="step-number">Step {index + 1}</span>
-        <span className="step-explanation">{step.explanation}</span>
+      <div className="step-indicator">
+        <div className="step-dot">{index + 1}</div>
+        <div className="step-line" />
       </div>
-      {step.latex && <MathBlock latex={step.latex} />}
-      {step.table && (
-        <div className="step-table-wrapper">
-          <table className="step-table">
-            <thead>
-              <tr>
-                {step.table.headers.map((h, i) => (
-                  <th key={i}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {step.table.rows.map((row, i) => (
-                <tr key={i}>
-                  {row.map((cell, j) => (
-                    <td key={j}>{cell}</td>
+      <div className="step-content">
+        <p className="step-explanation">{step.explanation}</p>
+        {step.latex && <MathBlock latex={step.latex} />}
+        {step.table && (
+          <div className="step-table-wrapper">
+            <table className="step-table">
+              <thead>
+                <tr>
+                  {step.table.headers.map((h, i) => (
+                    <th key={i}>{h}</th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      {step.substeps?.map((sub, i) => (
-        <div key={i} className="substep">
-          <StepCard step={sub} index={i} />
-        </div>
-      ))}
+              </thead>
+              <tbody>
+                {step.table.rows.map((row, i) => (
+                  <tr key={i}>
+                    {row.map((cell, j) => (
+                      <td key={j}>{cell}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {step.substeps?.map((sub, i) => (
+          <div key={i} className="substep">
+            <StepCard step={sub} index={i} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

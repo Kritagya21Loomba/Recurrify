@@ -12,7 +12,7 @@ from sympy import (
 )
 
 from recurrify.models.ast_nodes import RecurrenceInfo
-from recurrify.solvers.base import BaseSolver, SolutionResult, Step, TableData
+from recurrify.solvers.base import BaseSolver, SolutionResult, Step, TableData, to_sympy_number
 
 
 class RecursionTreeSolver(BaseSolver):
@@ -61,7 +61,7 @@ class RecursionTreeSolver(BaseSolver):
         # Step 2: Cost per level
         # At level i: a^i nodes, each contributes f(n/b^i)
         # Level cost: a^i * f(n/b^i)
-        f_at_level = f.subs(n, n / Integer(b) ** i)
+        f_at_level = f.subs(n, n / to_sympy_number(b) ** i)
         level_cost = Integer(a) ** i * f_at_level
         level_cost_simplified = simplify(level_cost)
 
@@ -80,8 +80,8 @@ class RecursionTreeSolver(BaseSolver):
         for level in range(4):
             nodes = a**level
             size = f"n/{b**level}" if level > 0 else "n"
-            cost_per_node = latex(f.subs(n, n / Integer(b) ** level))
-            total_cost = latex(simplify(Integer(a) ** level * f.subs(n, n / Integer(b) ** level)))
+            cost_per_node = latex(f.subs(n, n / to_sympy_number(b) ** level))
+            total_cost = latex(simplify(Integer(a) ** level * f.subs(n, n / to_sympy_number(b) ** level)))
             table_rows.append([str(level), str(nodes), size, cost_per_node, total_cost])
 
         steps.append(
@@ -121,7 +121,7 @@ class RecursionTreeSolver(BaseSolver):
 
         # Step 6: Identify the series type and compute closed form
         # Compute the ratio of successive level costs
-        ratio = simplify(Integer(a) * f.subs(n, n / Integer(b)) / f) if f != S.Zero else S.Zero
+        ratio = simplify(Integer(a) * f.subs(n, n / to_sympy_number(b)) / f) if f != S.Zero else S.Zero
         ratio_simplified = simplify(ratio)
 
         closed_form, closed_form_latex = self._sum_series(
@@ -146,7 +146,7 @@ class RecursionTreeSolver(BaseSolver):
         """Compute the total cost by summing the geometric-like series."""
         from sympy import log as symlog
 
-        crit = symlog(Integer(a), Integer(b))
+        crit = symlog(Integer(a), to_sympy_number(b))
         crit_simplified = simplify(crit)
         n_crit = n**crit_simplified
 

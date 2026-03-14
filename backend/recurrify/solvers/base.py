@@ -3,6 +3,21 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
+from sympy import Integer, Rational
+
+
+def to_sympy_number(val):
+    """Convert a numeric value to an appropriate SymPy type.
+
+    Integer values become Integer; non-integer values become Rational.
+    This avoids Integer(1.5) silently truncating to 1.
+    """
+    if isinstance(val, (Integer, Rational)):
+        return val
+    if isinstance(val, int) or (isinstance(val, float) and val == int(val)):
+        return Integer(int(val))
+    return Rational(val).limit_denominator(1000)
+
 
 @dataclass
 class TableData:

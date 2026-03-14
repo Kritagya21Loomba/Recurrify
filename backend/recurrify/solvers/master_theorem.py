@@ -13,7 +13,7 @@ from sympy import (
 )
 
 from recurrify.models.ast_nodes import RecurrenceInfo
-from recurrify.solvers.base import BaseSolver, SolutionResult, Step
+from recurrify.solvers.base import BaseSolver, SolutionResult, Step, to_sympy_number
 
 
 class MasterTheoremSolver(BaseSolver):
@@ -55,7 +55,7 @@ class MasterTheoremSolver(BaseSolver):
         )
 
         # Step 2: Compute critical exponent
-        crit = log(Integer(a), Integer(b)) if b != 1 else S.Zero
+        crit = log(Integer(a), to_sympy_number(b)) if b != 1 else S.Zero
         crit_simplified = simplify(crit)
         steps.append(
             Step(

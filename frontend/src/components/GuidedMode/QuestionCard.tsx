@@ -41,6 +41,7 @@ export function QuestionCard({
               }}
               disabled={loading}
             >
+              <span className="choice-letter">{String.fromCharCode(65 + i)}</span>
               {choice}
             </button>
           ))}
@@ -76,10 +77,23 @@ export function QuestionCard({
         <div
           className={`feedback ${feedback.correct ? "correct" : "incorrect"}`}
         >
-          <p>{feedback.feedback_text}</p>
-          {feedback.feedback_latex && (
-            <MathBlock latex={feedback.feedback_latex} />
-          )}
+          <span className="feedback-icon">
+            {feedback.correct ? (
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8l4 4 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            )}
+          </span>
+          <div>
+            <p>{feedback.feedback_text}</p>
+            {feedback.feedback_latex && (
+              <MathBlock latex={feedback.feedback_latex} />
+            )}
+          </div>
         </div>
       )}
     </div>
